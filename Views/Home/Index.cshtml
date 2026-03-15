@@ -1,8 +1,72 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Головна";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mb-5">
+    <h1 class="display-4">Дашборд Системи Оренди</h1>
+    <p>Статистика по нашому обладнанню.</p>
 </div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div id="equipmentByCategoryChart" style="height: 400px; width: 100%;"></div>
+    </div>
+    <div class="col-md-6">
+        <div id="equipmentByStatusChart" style="height: 400px; width: 100%;"></div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            // Малюємо Діаграму 1 (Стовпчаста)
+            fetch('/api/charts/equipmentByCategory')
+                .then(response => response.json())
+                .then(data => {
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Категорія');
+                    dataTable.addColumn('number', 'Кількість одиниць');
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.category, item.count]);
+                    });
+
+                    const options = {
+                        title: 'Кількість обладнання за категоріями',
+                        legend: { position: 'none' },
+                        hAxis: { title: 'Категорії' },
+                        vAxis: { title: 'Кількість' }
+                    };
+
+                    const chart = new google.visualization.ColumnChart(document.getElementById('equipmentByCategoryChart'));
+                    chart.draw(dataTable, options);
+                });
+
+            // Малюємо Діаграму 2 (Кругова)
+            fetch('/api/charts/equipmentByStatus')
+                .then(response => response.json())
+                .then(data => {
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Статус');
+                    dataTable.addColumn('number', 'Кількість');
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.status, item.count]);
+                    });
+
+                    const options = {
+                        title: 'Розподіл обладнання за статусом',
+                        is3D: true // Зробимо її 3D для краси
+                    };
+
+                    const chart = new google.visualization.PieChart(document.getElementById('equipmentByStatusChart'));
+                    chart.draw(dataTable, options);
+                });
+        }
+    </script>
+}
